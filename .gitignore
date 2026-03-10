@@ -1,0 +1,55 @@
+# -----------------------
+# Ignorar carpeta genérica "app"
+# -----------------------
+app/
+
+# -----------------------
+# ASP.NET Core / InventoryService
+# -----------------------
+# Build outputs
+InventoryService/bin/
+InventoryService/obj/
+
+# User-specific files
+InventoryService/*.user
+InventoryService/*.suo
+InventoryService/*.userosscache
+InventoryService/*.userprefs
+
+# Visual Studio / Rider
+InventoryService/.vs/
+InventoryService/.idea/
+
+# Publish output
+InventoryService/publish/
+
+# Logs
+InventoryService/*.log
+
+# -----------------------
+# React + Vite / my-inventory-app
+# -----------------------
+# Dependencies
+my-inventory-app/node_modules/
+
+# Build outputs
+my-inventory-app/dist/
+
+# Environment files
+my-inventory-app/.env
+my-inventory-app/.env.local
+my-inventory-app/.env.development.local
+my-inventory-app/.env.test.local
+my-inventory-app/.env.production.local
+
+# Logs
+my-inventory-app/npm-debug.log*
+my-inventory-app/yarn-debug.log*
+my-inventory-app/yarn-error.log*
+
+# Vite cache
+my-inventory-app/.vite/
+
+# IDEs
+my-inventory-app/.idea/
+my-inventory-app/.vscode/
