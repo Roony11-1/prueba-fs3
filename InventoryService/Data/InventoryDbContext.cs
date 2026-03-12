@@ -11,4 +11,13 @@ public class InventoryDbContext : DbContext
     }
 
     public DbSet<Producto> Productos { get; set; }
+    public DbSet<Venta> Ventas { get; set;}
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Venta>()
+            .HasMany(venta => venta.Detalles)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }

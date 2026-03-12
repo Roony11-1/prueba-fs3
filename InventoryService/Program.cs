@@ -1,3 +1,4 @@
+using Confluent.Kafka;
 using InventoryService.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,14 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<InventoryDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
+
+var config = new ProducerConfig
+{
+    BootstrapServers = "localhost:9092" // Cambia según tu Kafka
+};
+
+builder.Services.AddSingleton<IProducer<Null, string>>(new ProducerBuilder<Null, string>(config).Build());
+
 var app = builder.Build();
 
 app.UseCors();
@@ -43,4 +52,5 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
+
 
