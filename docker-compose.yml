@@ -36,23 +36,8 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-  inventoryservice:
-    build: ./InventoryService
-    depends_on:
-      bd:
-        condition: service_healthy
-    ports:
-      - "5000:8080"
-    environment:
-      Kafka__BootstrapServers: kafka:9092
-      POSTGRES_CONNECTION: "Host=bd;Database=ejemplo_db;Username=ejemplo_user;Password=ejemplo_password"
-    restart: on-failure
-
   inventoryapp:
     build: ./my-inventory-app
-    depends_on:
-      inventoryservice:
-        condition: service_started
     ports:
       - "80:80"
 

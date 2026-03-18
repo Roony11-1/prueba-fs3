@@ -4,27 +4,27 @@
 app/
 
 # -----------------------
-# ASP.NET Core / InventoryService
+# ASP.NET Core / venta-service
 # -----------------------
 # Build outputs
-InventoryService/bin/
-InventoryService/obj/
+venta-service/bin/
+venta-service/obj/
 
 # User-specific files
-InventoryService/*.user
-InventoryService/*.suo
-InventoryService/*.userosscache
-InventoryService/*.userprefs
+venta-service/*.user
+venta-service/*.suo
+venta-service/*.userosscache
+venta-service/*.userprefs
 
 # Visual Studio / Rider
-InventoryService/.vs/
-InventoryService/.idea/
+venta-service/.vs/
+venta-service/.idea/
 
 # Publish output
-InventoryService/publish/
+venta-service/publish/
 
 # Logs
-InventoryService/*.log
+venta-service/*.log
 
 # -----------------------
 # React + Vite / my-inventory-app

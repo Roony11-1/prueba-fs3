@@ -38,7 +38,7 @@ function App() {
       .then((data) => setProductos(data))
       .catch((err) => console.error(err));
 
-    fetch("http://localhost:5000/api/venta")
+    fetch("http://localhost:5152/api/venta")
       .then((res) => res.json())
       .then((data) => setVentas(data))
       .catch((err) => console.error(err));
@@ -54,7 +54,7 @@ function App() {
       return;
     }
 
-    fetch("http://localhost:5000/api/venta", {
+    fetch("http://localhost:5152/api/venta", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -281,7 +281,7 @@ function App() {
           <div
             style={{ marginTop: "10px", fontStyle: "italic", color: "#ccc" }}
           >
-            Fecha: {v.fecha}
+            Fecha: {v.fecha ? new Date(v.fecha).toLocaleDateString("es-CL") : "Sin fecha"}
           </div>
         </div>
       ))}

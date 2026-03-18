@@ -4,10 +4,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace inventory_service.Migrations
+namespace VentaService.Migrations
 {
     /// <inheritdoc />
-    public partial class CrearVentaYDetalle : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,7 @@ namespace inventory_service.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Fecha = table.Column<DateOnly>(type: "date", nullable: false)
+                    Fecha = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -26,20 +26,20 @@ namespace inventory_service.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "VentaDetalle",
+                name: "VentasDetalles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ProductoId = table.Column<int>(type: "integer", nullable: false),
                     Cantidad = table.Column<int>(type: "integer", nullable: false),
-                    VentaId = table.Column<int>(type: "integer", nullable: true)
+                    VentaId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VentaDetalle", x => x.Id);
+                    table.PrimaryKey("PK_VentasDetalles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_VentaDetalle_Ventas_VentaId",
+                        name: "FK_VentasDetalles_Ventas_VentaId",
                         column: x => x.VentaId,
                         principalTable: "Ventas",
                         principalColumn: "Id",
@@ -47,8 +47,8 @@ namespace inventory_service.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_VentaDetalle_VentaId",
-                table: "VentaDetalle",
+                name: "IX_VentasDetalles_VentaId",
+                table: "VentasDetalles",
                 column: "VentaId");
         }
 
@@ -56,7 +56,7 @@ namespace inventory_service.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "VentaDetalle");
+                name: "VentasDetalles");
 
             migrationBuilder.DropTable(
                 name: "Ventas");
