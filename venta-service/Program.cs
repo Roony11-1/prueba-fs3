@@ -17,6 +17,11 @@ builder.Services.AddScoped<IVentaService, VentaService.Application.VentaService>
 // Registro de la db
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configuración de Polly para manejar reintentos o fallos
+//builder.Services.AddHttpClient("VentaServiceClient")
+//    .AddPolicyHandler(Policy.Handle<HttpRequestException>()
+//        .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)))); // Ejemplo de política de reintento exponencial
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
