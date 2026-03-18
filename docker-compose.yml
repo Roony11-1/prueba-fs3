@@ -50,6 +50,14 @@ services:
     depends_on:
       - bd
 
+  inventory_service:
+    build:
+      context: ./demo
+      dockerfile: dockerfile
+    container_name: inventory_service
+    ports:
+      - "5000:5000"
+
   inventoryapp:
     build: ./my-inventory-app
     ports:

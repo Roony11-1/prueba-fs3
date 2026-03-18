@@ -13,5 +13,5 @@ dotnet tool install --global dotnet-ef<br><br>
 - dotnet ef database update<br>
 
 
-<br>git config --global user.email "Correo"
- git config --global user.name "Nombre USER" </br>
+<br>git config --global user.email "Correo"<br>
+git config --global user.name "Usuario"</br>

@@ -16,7 +16,7 @@ public class VentaService(IVentaRepository ventaRepository) : IVentaService
 
         var ventaSaved = await _ventaRepository.AddAsync(venta);
 
-        var producer = new KafkaProducer("localhost:9092");
+        var producer = new KafkaProducer("kafka:9092");
 
         await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
 
