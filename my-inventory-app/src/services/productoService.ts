@@ -2,6 +2,25 @@ const API_URL = "http://localhost:5000/api/producto";
 
 export const obtenerProductos = async () => {
   const res = await fetch(API_URL);
+
+  if (!res.ok) 
+  {
+    let message = "Error al obtener productos (no lo traje del api)";
+
+    try 
+    {
+      const errorData = await res.json(); // ahora debería funcionar
+      message = errorData.message || message;
+    } 
+    catch 
+    {
+      const text = await res.text();
+      message = text || message;
+    }
+
+    throw new Error(message);
+  }
+
   return res.json();
 };
 
@@ -12,7 +31,19 @@ export const crearProducto = async (producto: any) => {
     body: JSON.stringify(producto),
   });
 
-  if (!res.ok) throw new Error("Error al crear producto");
+  if (!res.ok) {
+    let message = "Error al crear producto (no viene del api)";
+
+    try {
+      const errorData = await res.json();
+      message = errorData.message || message;
+    } catch {
+      const text = await res.text();
+      message = text || message;
+    }
+
+    throw new Error(message);
+  }
 
   return res.json();
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-import  type { Producto, Venta, VentaDetalle } from "./types";
+import type { Producto, Venta, VentaDetalle } from "./types";
 import { obtenerProductos, crearProducto } from "./services/productoService";
 import { obtenerVentas, crearVenta } from "./services/ventaService";
 
@@ -15,28 +15,37 @@ function App() {
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [carrito, setCarrito] = useState<VentaDetalle[]>([]);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     cargarDatos();
   }, []);
 
   const cargarDatos = async () => {
     try {
+      setError(null);
+
       const prod = await obtenerProductos();
       const vent = await obtenerVentas();
 
       setProductos(prod);
       setVentas(vent);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message);
     }
   };
 
   const handleCrearProducto = async (producto: any) => {
     try {
+      setError(null);
+
       const creado = await crearProducto(producto);
       setProductos([...productos, creado]);
-    } catch (err) {
-      alert("Error creando producto");
+
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
     }
   };
 
@@ -59,7 +68,7 @@ function App() {
   return (
     <div className="App">
       <h1>Inventory App</h1>
-
+      {error && <div style={{ color: "red" }}>{error}</div>}
       <ProductoForm onCrear={handleCrearProducto} />
       <ProductoList productos={productos} />
 

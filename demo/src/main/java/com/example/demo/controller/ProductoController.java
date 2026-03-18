@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.domain.Producto;
-import com.example.demo.repository.ProductoRepository;
+import com.example.demo.service.ProductoService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,17 +21,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductoController 
 {
-    private final ProductoRepository _productoRepository;
+    private final ProductoService _ProductoService;
 
     @GetMapping
     public ResponseEntity<List<Producto>> findAll()
     {
-        return ResponseEntity.ok(_productoRepository.findAll());
+        return ResponseEntity.ok(_ProductoService.findAll());
     }
 
     @PostMapping
     public ResponseEntity<Producto> save(@RequestBody Producto producto)
     {
-        return ResponseEntity.ok(_productoRepository.save(producto));
+        return ResponseEntity.ok(_ProductoService.save(producto));
     }
 }

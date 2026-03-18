@@ -1,6 +1,7 @@
 services:
   bd:
     image: postgres:15
+    container_name: bd
     environment:
       POSTGRES_DB: ejemplo_db
       POSTGRES_USER: ejemplo_user
@@ -45,7 +46,6 @@ services:
       - "5152:5152"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__Default=Host=bd;Port=5432;Database=ejemplo_db;Username=ejemplo_user;Password=ejemplo_password
       - ASPNETCORE_URLS=http://+:5152
     depends_on:
       - bd
@@ -59,6 +59,7 @@ services:
       - "5000:5000"
 
   inventoryapp:
+    container_name: inventory_app
     build: ./my-inventory-app
     ports:
       - "80:80"

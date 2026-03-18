@@ -17,6 +17,12 @@ public class InventoryConsumer
 {
     private final ProductoRepository _productoRepository;
 
+    @KafkaListener(topics = "productos-pendientes", groupId = "producto-group")
+    public void reintentarGuardar(Producto producto)
+    {
+        _productoRepository.save(producto);
+    }
+
     @KafkaListener(topics = "venta-realizada", groupId = "producto-group")
     public void descontarInventario(String message)
     {
