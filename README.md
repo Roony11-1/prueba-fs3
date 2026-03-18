@@ -11,3 +11,7 @@ dotnet tool install --global dotnet-ef<br><br>
 # Migraciones<br>
 - dotnet ef migrations add <Nombre><br>
 - dotnet ef database update<br>
+
+
+<br>git config --global user.email "Correo"
+ git config --global user.name "Nombre USER" </br>
