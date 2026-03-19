@@ -12,9 +12,22 @@ public class VentaService(IVentaRepository ventaRepository, AppDbContext context
     private readonly IVentaRepository _ventaRepository = ventaRepository;
     private readonly AppDbContext _context = context;
 
-    private readonly AsyncRetryPolicy _retryPolicy = Policy
+    private readonly AsyncRetryPolicy _retryDbPolicy = Policy
         .Handle<Exception>()
-        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(250));
+        .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(250));
+
+    private readonly AsyncRetryPolicy _retryKafkaPolicy = Policy
+        .Handle<Exception>()
+        .WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(150));
+
+    private readonly AsyncCircuitBreakerPolicy _circuitKafka = Policy
+        .Handle<Exception>()
+        .AdvancedCircuitBreakerAsync(
+            failureThreshold: 0.5,
+            samplingDuration: TimeSpan.FromSeconds(10),
+            minimumThroughput: 6,
+            durationOfBreak: TimeSpan.FromSeconds(20)
+        );
 
     public async Task<Venta> CrearVenta(Venta venta)
     {
@@ -27,43 +40,53 @@ public class VentaService(IVentaRepository ventaRepository, AppDbContext context
 
         try
         {
-            var ventaSaved = await _retryPolicy.ExecuteAsync(async () =>
-            {
-                return await _ventaRepository.AddAsync(venta);
-            });
+            var ventaSaved = await _retryDbPolicy.ExecuteAsync(() =>
+                _ventaRepository.AddAsync(venta)
+            );
 
             var producer = new KafkaProducer("kafka:9092");
 
-            try
+            await _circuitKafka.ExecuteAsync(async () =>
             {
-                await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("KAFKA_ERROR", ex);
-            }
+                await _retryKafkaPolicy.ExecuteAsync(async () =>
+                {
+                    await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
+                });
+            });
 
             await transaction.CommitAsync();
 
             return ventaSaved;
         }
+        catch (BrokenCircuitException)
+        {
+            await transaction.RollbackAsync();
+            return await FallbackKafka(new Exception("Circuito abierto (Kafka caído)"));
+        }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
 
-            if (ex.Message == "KAFKA_ERROR")
-                return await FallbackKafka(ex.InnerException!);
+            if (EsErrorKafka(ex))
+                return await FallbackKafka(ex);
 
             return await FallbackCrearVenta(ex);
         }
     }
 
-    private async Task<Venta> FallbackKafka(Exception ex)
+    private bool EsErrorKafka(Exception ex)
     {
-        throw new Exception("Servicio de Kafka caido!");
+        return ex is BrokenCircuitException ||
+               ex.Message.Contains("kafka", StringComparison.OrdinalIgnoreCase) ||
+               ex.Message.Contains("broker", StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<Venta> FallbackCrearVenta(Exception ex)
+    private Task<Venta> FallbackKafka(Exception ex)
+    {
+        throw new Exception("Servicio de Kafka caído!");
+    }
+
+    private Task<Venta> FallbackCrearVenta(Exception ex)
     {
         throw new Exception("No se pudo crear la venta");
     }
@@ -72,21 +95,17 @@ public class VentaService(IVentaRepository ventaRepository, AppDbContext context
     {
         try
         {
-            var ventas = await _retryPolicy.ExecuteAsync(async () =>
-            {
-                return await _ventaRepository.GetAllAsync();
-            });
-
-            return ventas;
+            return await _retryDbPolicy.ExecuteAsync(() =>
+                _ventaRepository.GetAllAsync()
+            );
         }
         catch (Exception ex)
         {
-            // fallback
             return await FallbackGetAll(ex);
         }
     }
 
-    public async Task<List<Venta>> FallbackGetAll(Exception ex)
+    private Task<List<Venta>> FallbackGetAll(Exception ex)
     {
         throw new Exception("No se pudieron obtener las ventas");
     }
