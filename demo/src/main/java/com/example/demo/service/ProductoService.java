@@ -3,7 +3,7 @@ package com.example.demo.service;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.kafka.core.KafkaTemplate;
+// import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductoService 
 {
     private final ProductoRepository _productoRepository;
-    private final KafkaTemplate<String, Producto> _kafkaTemplate;
+    // private final KafkaTemplate<String, Producto> _kafkaTemplate;
 
     @Retry(name = "productoRetry", fallbackMethod = "fallbackFindAll")
     public List<Producto> findAll() 

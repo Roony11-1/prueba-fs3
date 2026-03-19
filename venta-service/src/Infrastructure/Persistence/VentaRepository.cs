@@ -3,60 +3,41 @@ using Microsoft.EntityFrameworkCore;
 using VentaService.Domain;
 using Microsoft.Data.SqlClient;
 
-namespace VentaService.Infrastructure.Persistence
+namespace VentaService.Infrastructure.Persistence;
+
+public class VentaRepository : IVentaRepository
 {
-    public class VentaRepository : IVentaRepository
+    private readonly AppDbContext _context;
+
+    public VentaRepository(AppDbContext context)
     {
-        private readonly AppDbContext _context;
-        private readonly IAsyncPolicy _retryPolicy;
+        _context = context;
+    }
 
-        public VentaRepository(AppDbContext context)
+    public async Task<Venta> AddAsync(Venta venta)
+    {
+        // Normalmente, esta lógica agregaría la venta
+        foreach (var detalle in venta.Detalles)
         {
-            _context = context;
-
-            // Crear una política de reintento asincrónica
-            _retryPolicy = Policy.Handle<Exception>()  // Maneja las excepciones de tipo SqlException (comunes en las bases de datos)
-                                 .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));  // Retrasos exponenciales: 1, 2, 4 segundos
+            detalle.Venta = venta;
         }
 
-        public async Task<Venta> AddAsync(Venta venta)
-        {
-            if (DateTime.Now.Second % 2 == 0) // Alternar el fallo para que ocurra en ocasiones
-            {
-                throw new Exception("Simulando una falla de base de datos");
-            }
+        _context.Ventas.Add(venta);
+        await _context.SaveChangesAsync();
+        return venta;
+    }
 
-            // Normalmente, esta lógica agregaría la venta
-            foreach (var detalle in venta.Detalles)
-            {
-                detalle.Venta = venta;
-            }
+    public async Task<List<Venta>> GetAllAsync()
+    {
+        return await _context.Ventas
+            .Include(v => v.Detalles)
+            .ToListAsync();
+    }
 
-            _context.Ventas.Add(venta);
-            await _context.SaveChangesAsync();
-            return venta;
-        }
-
-        public Task<List<Venta>> GetAllAsync()
-        {
-            // Aplicar la política de reintentos a la operación de base de datos
-            return _retryPolicy.ExecuteAsync(async () =>
-            {
-                return await _context.Ventas
-                    .Include(v => v.Detalles)
-                    .ToListAsync();
-            });
-        }
-
-        public async Task<Venta?> GetByIdAsync(int id)
-        {
-            // Aplicar la política de reintentos a la operación de base de datos
-            return await _retryPolicy.ExecuteAsync(async () =>
-            {
-                return await _context.Ventas
-                    .Include(v => v.Detalles)
-                    .FirstOrDefaultAsync(v => v.Id == id);
-            });
-        }
+    public async Task<Venta?> GetByIdAsync(int id)
+    {
+        return await _context.Ventas
+            .Include(v => v.Detalles)
+            .FirstOrDefaultAsync(v => v.Id == id);
     }
 }

@@ -11,11 +11,10 @@ public class VentaController(IVentaService ventaService) : ControllerBase
     private readonly IVentaService _ventaService = ventaService;
 
     [HttpPost]
-    public async Task<ActionResult<Venta>> CrearVenta(Venta venta)
+    public async Task<IActionResult> CrearVenta(Venta venta)
     {
-        Venta ventaSaved = await _ventaService.CrearVenta(venta);
-
-        return ventaSaved;
+        var result = await _ventaService.CrearVenta(venta);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
@@ -30,10 +29,9 @@ public class VentaController(IVentaService ventaService) : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Venta>>> GetAll()
+    public async Task<IActionResult> GetAll()
     {
         var ventas = await _ventaService.GetAll();
-
-        return ventas;
+        return Ok(ventas);
     }
 }

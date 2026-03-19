@@ -1,20 +1,27 @@
 services:
-  bd:
+  bd_inventory:
     image: postgres:15
-    container_name: bd
+    container_name: bd_inventory
     environment:
-      POSTGRES_DB: ejemplo_db
-      POSTGRES_USER: ejemplo_user
-      POSTGRES_PASSWORD: ejemplo_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_DB: inventory_db
+      POSTGRES_USER: inventory_user
+      POSTGRES_PASSWORD: inventory_pass
     ports:
-      - "9999:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ejemplo_user -d ejemplo_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - "9998:5432"
+    volumes:
+      - postgres_inventory:/var/lib/postgresql/data
+
+  bd_venta:
+    image: postgres:15
+    container_name: bd_venta
+    environment:
+      POSTGRES_DB: venta_db
+      POSTGRES_USER: venta_user
+      POSTGRES_PASSWORD: venta_pass
+    ports:
+      - "9997:5432"
+    volumes:
+      - postgres_venta:/var/lib/postgresql/data
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -48,7 +55,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5152
     depends_on:
-      - bd
+      - bd_venta
 
   inventory_service:
     build:
@@ -57,6 +64,8 @@ services:
     container_name: inventory_service
     ports:
       - "5000:5000"
+    depends_on:
+      - bd_inventory
 
   inventoryapp:
     container_name: inventory_app
@@ -65,4 +74,5 @@ services:
       - "80:80"
 
 volumes:
-  postgres_data:
+  postgres_inventory:
+  postgres_venta:

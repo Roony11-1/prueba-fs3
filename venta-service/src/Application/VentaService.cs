@@ -2,19 +2,17 @@ using VentaService.Domain;
 using VentaService.Infrastructure.Messaging;
 using Polly;
 using Polly.CircuitBreaker;
+using Polly.Retry;
 
 namespace VentaService.Application;
 
 public class VentaService(IVentaRepository ventaRepository) : IVentaService
 {
     private readonly IVentaRepository _ventaRepository = ventaRepository;
-    // Circuit Breaker
-    private readonly AsyncCircuitBreakerPolicy _circuitBreaker = Policy
+
+    private readonly AsyncRetryPolicy _retryPolicy = Policy
         .Handle<Exception>()
-        .CircuitBreakerAsync(
-            exceptionsAllowedBeforeBreaking: 3,
-            durationOfBreak: TimeSpan.FromSeconds(10)
-        );
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(250));
 
     public async Task<Venta> CrearVenta(Venta venta)
     {
@@ -23,22 +21,51 @@ public class VentaService(IVentaRepository ventaRepository) : IVentaService
 
         venta.Fecha = DateTimeOffset.UtcNow;
 
-        var ventaSaved = await _ventaRepository.AddAsync(venta);
-
-        var producer = new KafkaProducer("kafka:9092");
-
-        // AQUÍ se aplica el Circuit Breaker
-        await _circuitBreaker.ExecuteAsync(async () =>
+        try
         {
-            await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
-        });
+            var ventaSaved = await _retryPolicy.ExecuteAsync(async () =>
+            {
+                return await _ventaRepository.AddAsync(venta);
+            });
 
-        return ventaSaved;
+            var producer = new KafkaProducer("kafka:9092");
+            await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
+
+            return ventaSaved;
+        }
+        catch (Exception ex)
+        {
+            // fallback
+            return await FallbackCrearVenta(venta, ex);
+        }
+    }
+
+    private async Task<Venta> FallbackCrearVenta(Venta venta, Exception ex)
+    {
+        throw new Exception("No se pudo crear la venta");
     }
 
     public async Task<List<Venta>> GetAll()
     {
-        return await _ventaRepository.GetAllAsync();
+        try
+        {
+            var ventas = await _retryPolicy.ExecuteAsync(async () =>
+            {
+                return await _ventaRepository.GetAllAsync();
+            });
+
+            return ventas;
+        }
+        catch (Exception ex)
+        {
+            // fallback
+            return await FallbackGetAll(ex);
+        }
+    }
+
+    public async Task<List<Venta>> FallbackGetAll(Exception ex)
+    {
+        throw new Exception("No se pudieron obtener las ventas");
     }
 
     public async Task<Venta?> GetById(int id)

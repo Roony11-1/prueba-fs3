@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VentaService.Application;
 using VentaService.Domain;
+using VentaService.Infrastructure.Middleware;
 using VentaService.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,5 +51,7 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.UseCors("AllowAll");
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.Run();

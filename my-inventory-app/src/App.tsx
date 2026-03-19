@@ -15,37 +15,43 @@ function App() {
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [carrito, setCarrito] = useState<VentaDetalle[]>([]);
 
-  const [error, setError] = useState<string | null>(null);
+  const [errorP, setErrorP] = useState<string | null>(null);
+  const [errorV, setErrorV] = useState<string | null>(null);
 
   useEffect(() => {
     cargarDatos();
   }, []);
 
   const cargarDatos = async () => {
+    setErrorP(null);
+    setErrorV(null);
+
     try {
-      setError(null);
-
       const prod = await obtenerProductos();
-      const vent = await obtenerVentas();
-
       setProductos(prod);
+    } catch (err: any) {
+      console.error(err);
+      setErrorP(err.message);
+    }
+
+    try {
+      const vent = await obtenerVentas();
       setVentas(vent);
     } catch (err: any) {
       console.error(err);
-      setError(err.message);
+      setErrorV(err.message);
     }
   };
 
   const handleCrearProducto = async (producto: any) => {
     try {
-      setError(null);
+      setErrorP(null);
 
       const creado = await crearProducto(producto);
       setProductos([...productos, creado]);
-
     } catch (err: any) {
       console.error(err);
-      setError(err.message);
+      setErrorP(err.message);
     }
   };
 
@@ -56,19 +62,22 @@ function App() {
     }
 
     try {
-      const mensaje = await crearVenta({ detalles: carrito });
-      alert(mensaje);
+      setErrorV(null);
+
+      const venta = await crearVenta({ detalles: carrito });
+
       setCarrito([]);
-      cargarDatos();
+      setVentas([...ventas, venta]);
     } catch (err: any) {
-      alert(err.message);
+      console.error(err);
+      setErrorV(err.message);
     }
   };
 
   return (
     <div className="App">
       <h1>Inventory App</h1>
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {errorP && <div style={{ color: "red" }}>{errorP}</div>}
       <ProductoForm onCrear={handleCrearProducto} />
       <ProductoList productos={productos} />
 
@@ -78,7 +87,7 @@ function App() {
         setCarrito={setCarrito}
         onVender={handleVenta}
       />
-
+      {errorV && <div style={{ color: "orange" }}>{errorV}</div>}
       <VentasList ventas={ventas} productos={productos} />
     </div>
   );
