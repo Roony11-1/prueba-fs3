@@ -3,12 +3,14 @@ using VentaService.Infrastructure.Messaging;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
+using VentaService.Infrastructure.Persistence;
 
 namespace VentaService.Application;
 
-public class VentaService(IVentaRepository ventaRepository) : IVentaService
+public class VentaService(IVentaRepository ventaRepository, AppDbContext context) : IVentaService
 {
     private readonly IVentaRepository _ventaRepository = ventaRepository;
+    private readonly AppDbContext _context = context;
 
     private readonly AsyncRetryPolicy _retryPolicy = Policy
         .Handle<Exception>()
@@ -21,6 +23,8 @@ public class VentaService(IVentaRepository ventaRepository) : IVentaService
 
         venta.Fecha = DateTimeOffset.UtcNow;
 
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
         try
         {
             var ventaSaved = await _retryPolicy.ExecuteAsync(async () =>
@@ -29,18 +33,37 @@ public class VentaService(IVentaRepository ventaRepository) : IVentaService
             });
 
             var producer = new KafkaProducer("kafka:9092");
-            await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
+
+            try
+            {
+                await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("KAFKA_ERROR", ex);
+            }
+
+            await transaction.CommitAsync();
 
             return ventaSaved;
         }
         catch (Exception ex)
         {
-            // fallback
-            return await FallbackCrearVenta(venta, ex);
+            await transaction.RollbackAsync();
+
+            if (ex.Message == "KAFKA_ERROR")
+                return await FallbackKafka(ex.InnerException!);
+
+            return await FallbackCrearVenta(ex);
         }
     }
 
-    private async Task<Venta> FallbackCrearVenta(Venta venta, Exception ex)
+    private async Task<Venta> FallbackKafka(Exception ex)
+    {
+        throw new Exception("Servicio de Kafka caido!");
+    }
+
+    private async Task<Venta> FallbackCrearVenta(Exception ex)
     {
         throw new Exception("No se pudo crear la venta");
     }
