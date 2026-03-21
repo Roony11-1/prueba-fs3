@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using VentaService.Domain.CustomExceptions;
 
 namespace VentaService.Infrastructure.Middleware;
 
@@ -28,17 +29,31 @@ public class GlobalExceptionMiddleware
     {
         context.Response.ContentType = "application/json";
 
-        var statusCode = 503;
-
-        var response = new
+        var (statusCode, message) = ex switch
         {
-            message = ex.Message,
-            status = statusCode
+            InvalidOperationException => ((int)HttpStatusCode.Conflict, ex.Message),
+
+            Polly.CircuitBreaker.BrokenCircuitException =>
+                ((int)HttpStatusCode.ServiceUnavailable, "El servicio de inventario está en mantenimiento preventivo (Circuito Abierto)."),
+
+            Polly.Timeout.TimeoutRejectedException =>
+                ((int)HttpStatusCode.GatewayTimeout, "El servicio de inventario tardó demasiado en responder."),
+
+            ServiceUnavailableException => ((int)HttpStatusCode.ServiceUnavailable, ex.Message),
+
+            HttpRequestException =>
+                ((int)HttpStatusCode.ServiceUnavailable, "No se pudo establecer conexión con el microservicio de inventario."),
+
+            _ => ((int)HttpStatusCode.InternalServerError, "Error interno no controlado.")
         };
 
         context.Response.StatusCode = statusCode;
 
-        var json = JsonSerializer.Serialize(response);
-        await context.Response.WriteAsync(json);
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new
+        {
+            error = message,
+            status = statusCode,
+            timestamp = DateTime.UtcNow
+        }));
     }
 }

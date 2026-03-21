@@ -1,35 +1,38 @@
+import axios from "axios";
+
 const API_URL = "http://localhost:5000/api/producto";
 
-export const obtenerProductos = async () => {
-  const res = await fetch(API_URL);
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  if (!res.ok) {
-    let message = "Error al obtener productos (no lo traje del api)";
-
-    const errorData = await res.json(); // ahora debería funcionar
-    message = errorData.message || message;
-
+export const obtenerProductos = async () => 
+{
+  try 
+  {
+    const res = await api.get("");
+    return res.data;
+  } 
+  catch (err: any) 
+  {
+    const message = err.response?.data?.message || "Error al obtener productos";
     throw new Error(message);
   }
-
-  return res.json();
 };
 
-export const crearProducto = async (producto: any) => {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(producto),
-  });
-
-  if (!res.ok) {
-    let message = "Error al crear producto (no viene del api)";
-
-    const errorData = await res.json();
-    message = errorData.message || message;
-
+export const crearProducto = async (producto: any) => 
+{
+  try 
+  {
+    const res = await api.post("", producto);
+    return res.data;
+  } 
+  catch (err: any) 
+  {
+    const message = err.response?.data?.message || "Error al crear el producto";
     throw new Error(message);
   }
-
-  return res.json();
 };

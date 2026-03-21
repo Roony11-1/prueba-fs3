@@ -80,14 +80,6 @@ function App()
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      cargarProductos();
-    }, 3000); // cada 3 segundos
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="App">
       <h1>Inventory App</h1>

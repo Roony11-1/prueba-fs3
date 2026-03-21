@@ -50,7 +50,7 @@ services:
     command: >
       bash -c "kafka-topics --create --if-not-exists --topic venta-realizada --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1"
 
-  venta_service:
+  venta-service:
     build:
       context: ./venta-service
       dockerfile: dockerfile
@@ -63,7 +63,7 @@ services:
     depends_on:
       - bd_venta
 
-  inventory_service:
+  inventory-service:
     build:
       context: ./demo
       dockerfile: dockerfile

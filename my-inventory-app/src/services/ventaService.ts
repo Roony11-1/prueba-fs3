@@ -1,35 +1,41 @@
+import axios from "axios";
+
 const API_URL = "http://localhost:5152/api/venta";
 
-export const obtenerVentas = async () => {
-  const res = await fetch(API_URL);
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  if (!res.ok) {
-    let message = "Error al obtener ventas (no api)";
-
-    const errorData = await res.json();
-    message = errorData.message || message;
-
+export const obtenerVentas = async () => 
+{
+  try 
+  {
+    const res = await api.get("/");
+    return res.data;
+  } 
+  catch (err: any) 
+  {
+    const message = err.response?.data?.error || "Error al obtener ventas";
     throw new Error(message);
   }
-
-  return res.json();
 };
 
-export const crearVenta = async (venta: any) => {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(venta),
-  });
-
-  if (!res.ok) {
-    let message = "Error al realizar la venta (no api)";
-
-    const errorData = await res.json();
-    message = errorData.message || message;
-
+export const crearVenta = async (venta: any) => 
+{
+  try 
+  {
+    const res = await api.post("/", venta);
+    return res.data;
+  } 
+  catch (err: any) 
+  {
+    const message = err.response?.data?.error || "Error al realizar la venta";
+    
+    console.error(`Status: ${err.response?.status}`);
+    
     throw new Error(message);
   }
-
-  return res.json();
 };
