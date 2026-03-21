@@ -1,6 +1,9 @@
+using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using VentaService.Application;
+using VentaService.Application.Interfaces;
 using VentaService.Domain;
+using VentaService.Infrastructure.BackgroundJobs;
 using VentaService.Infrastructure.Messaging;
 using VentaService.Infrastructure.Middleware;
 using VentaService.Infrastructure.Persistence;
@@ -13,8 +16,14 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 // Di
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 builder.Services.AddScoped<IVentaService, VentaService.Application.VentaService>();
+
+// Creamos un canal que solo transporta una "señal"
+builder.Services.AddSingleton(Channel.CreateUnbounded<bool>());
+
+builder.Services.AddHostedService<OutboxProcessorBackgroundService>();
 
 builder.Services.AddScoped<IEventPublisher>(sp =>
 {
@@ -25,11 +34,6 @@ builder.Services.AddScoped<IEventPublisher>(sp =>
 
 // Registro de la db
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configuración de Polly para manejar reintentos o fallos
-//builder.Services.AddHttpClient("VentaServiceClient")
-//    .AddPolicyHandler(Policy.Handle<HttpRequestException>()
-//        .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)))); // Ejemplo de política de reintento exponencial
 
 builder.Services.AddCors(options =>
 {

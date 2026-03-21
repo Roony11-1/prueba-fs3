@@ -43,6 +43,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      
+  kafka-setup:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on: [kafka]
+    command: >
+      bash -c "kafka-topics --create --if-not-exists --topic venta-realizada --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1"
 
   venta_service:
     build:

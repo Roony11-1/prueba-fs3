@@ -8,6 +8,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Venta> Ventas { get; set; }
     public DbSet<VentaDetalle> VentasDetalles { get; set; }
 
+    public DbSet<OutboxMessage> OutboxMessages { get; set;}
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
