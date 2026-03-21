@@ -1,69 +1,58 @@
 package com.example.demo.controller;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.Producto;
+import com.example.demo.domain.event.VentaRealizadaEvent;
 import com.example.demo.repository.ProductoRepository;
 
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryConsumer 
 {
     private final ProductoRepository _productoRepository;
+    private final ObjectMapper _mapper;
 
-    @KafkaListener(topics = "productos-pendientes", groupId = "producto-group")
-    public void reintentarGuardar(Producto producto)
+    /*@KafkaListener(topics = "productos-pendientes", groupId = "producto-group")
+    public void reintentarGuardar(Producto producto) 
     {
         _productoRepository.save(producto);
-    }
+    }*/
 
     @KafkaListener(topics = "venta-realizada", groupId = "producto-group")
     public void descontarInventario(String message)
     {
-        System.out.println(message);
-        
-        List<String> parts = List.of(message.split(":"));
-
-        // El id de la venta:
-        Integer ventaId = Integer.parseInt(parts.get(0));
-
-        // [pId-C, pId-C, ..., pId-C]
-        List<String> detalles = List.of(parts.get(1).split(";"));
-
-        List<Integer> productoIds = new ArrayList<>();
-        List<Integer> cantidades = new ArrayList<>();
-
-        detalles.forEach(d -> 
+        try 
         {
-            List<String> detalleParts = List.of(d.split("-"));
+            VentaRealizadaEvent event = _mapper.readValue(message, VentaRealizadaEvent.class);
 
-            productoIds.add(Integer.parseInt(detalleParts.get(0)));
-            cantidades.add(Integer.parseInt(detalleParts.get(1)));
-        });
+            System.out.println("Descontando inventario para venta " + event.getId());
 
-        List<Producto> prodUpdate = new ArrayList<>();
+            List<Producto> productos = event.getDetalles().stream()
+                    .map(detalle -> _productoRepository.findById(detalle.getProductoId())
+                            .map(p -> {
+                                p.setStock(p.getStock() - detalle.getCantidad());
+                                return p;
+                            })
+                            .orElse(null))
+                    .filter(Objects::nonNull)
+                    .toList();
 
-        for (int i = 0; i < productoIds.size(); i++)
+            _productoRepository.saveAll(productos);
+
+            System.out.println("Cantidad de productos actualizados: " + productos.size());
+        } 
+        catch (Exception e) 
         {
-            Integer pId = productoIds.get(i);
-            Integer cantidad = cantidades.get(i);
-
-            _productoRepository.findById(pId).ifPresent(p -> 
-            {
-                p.setStock(p.getStock() - cantidad);
-                prodUpdate.add(p);
-            });
+            System.err.println("Error procesando mensaje Kafka: " + message);
+            e.printStackTrace();
         }
-
-        System.out.println("Descontando inventario para venta "+ventaId);
-        System.out.println("Cantidad de productos actualizados: "+prodUpdate.size());
-
-        _productoRepository.saveAll(prodUpdate);
     }
 }

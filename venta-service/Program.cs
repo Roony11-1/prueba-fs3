@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VentaService.Application;
 using VentaService.Domain;
+using VentaService.Infrastructure.Messaging;
 using VentaService.Infrastructure.Middleware;
 using VentaService.Infrastructure.Persistence;
 
@@ -14,6 +15,13 @@ builder.Services.AddControllers();
 // Di
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 builder.Services.AddScoped<IVentaService, VentaService.Application.VentaService>();
+
+builder.Services.AddScoped<IEventPublisher>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var bootstrap = config["Kafka:BootstrapServers"] ?? throw new ArgumentException("Kafka:BootstrapServers is not defined");
+    return new KafkaProducer(bootstrap);
+});
 
 // Registro de la db
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

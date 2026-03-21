@@ -1,48 +1,34 @@
 using Confluent.Kafka;
+using VentaService.Application;
+using System.Text.Json;
 
 namespace VentaService.Infrastructure.Messaging;
 
-public class KafkaProducer(string bootstrapServers)
+public class KafkaProducer : IEventPublisher
 {
-    private readonly string _bootstrapServers = bootstrapServers;
+    private readonly IProducer<Null, string> _producer;
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
-    public async Task EnviarMensajeAsync(string topic, string message)
+    public KafkaProducer(string bootstrapServers)
     {
         var config = new ProducerConfig
         {
-            BootstrapServers = _bootstrapServers,
-
-            MessageTimeoutMs = 1500,
-            SocketTimeoutMs = 1500,
-            RequestTimeoutMs = 1500
+            BootstrapServers = bootstrapServers
         };
 
-        using var producer = new ProducerBuilder<Null, string>(config).Build();
+        _producer = new ProducerBuilder<Null, string>(config).Build();
+    }
 
-        try
+    public async Task PublishAsync<T>(string topic, T message)
+    {
+        var json = JsonSerializer.Serialize(message, _jsonOptions);
+
+        await _producer.ProduceAsync(topic, new Message<Null, string>
         {
-            var result = await producer.ProduceAsync(topic, new Message<Null, string>
-            {
-                Value = message
-            });
-
-            if (result.Status != PersistenceStatus.Persisted)
-            {
-                throw new Exception("Kafka no confirmó el mensaje");
-            }
-
-            producer.Flush(TimeSpan.FromSeconds(5));
-
-            Console.WriteLine($"Mensaje enviado a {result.TopicPartitionOffset}");
-            Console.WriteLine($"Mensaje: {message}");
-        }
-        catch (ProduceException<Null, string> ex)
-        {
-            throw new Exception("KAFKA_ERROR: " + ex.Error.Reason, ex);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("KAFKA_ERROR: " + ex.Message, ex);
-        }
+            Value = json
+        });
     }
 }

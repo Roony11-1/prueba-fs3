@@ -13,13 +13,4 @@ public class VentaDetalle
 
     [JsonIgnore]
     public Venta? Venta { get; set; }   // navegación
-
-    public override string ToString()
-    {
-        var sb = new StringBuilder();
-
-        sb.Append(this.ProductoId).Append('-').Append(this.Cantidad);
-
-        return sb.ToString();
-    }
 }

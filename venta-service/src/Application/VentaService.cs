@@ -7,10 +7,15 @@ using VentaService.Infrastructure.Persistence;
 
 namespace VentaService.Application;
 
-public class VentaService(IVentaRepository ventaRepository, AppDbContext context) : IVentaService
+public class VentaService(
+    IVentaRepository ventaRepository,
+    AppDbContext context,
+    IEventPublisher eventPublisher) : IVentaService
 {
     private readonly IVentaRepository _ventaRepository = ventaRepository;
     private readonly AppDbContext _context = context;
+
+    private readonly IEventPublisher _eventPublisher = eventPublisher;
 
     private readonly AsyncRetryPolicy _retryDbPolicy = Policy
         .Handle<Exception>()
@@ -44,13 +49,11 @@ public class VentaService(IVentaRepository ventaRepository, AppDbContext context
                 _ventaRepository.AddAsync(venta)
             );
 
-            var producer = new KafkaProducer("kafka:9092");
-
             await _circuitKafka.ExecuteAsync(async () =>
             {
                 await _retryKafkaPolicy.ExecuteAsync(async () =>
                 {
-                    await producer.EnviarMensajeAsync("venta-realizada", ventaSaved.ToString());
+                    await _eventPublisher.PublishAsync("venta-realizada", ventaSaved);
                 });
             });
 

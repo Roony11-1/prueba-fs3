@@ -10,7 +10,8 @@ import ProductoList from "./components/ProductoList";
 import Carrito from "./components/Carrito";
 import VentasList from "./components/VentasList";
 
-function App() {
+function App() 
+{
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [carrito, setCarrito] = useState<VentaDetalle[]>([]);
@@ -18,23 +19,20 @@ function App() {
   const [errorP, setErrorP] = useState<string | null>(null);
   const [errorV, setErrorV] = useState<string | null>(null);
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const cargarDatos = async () => {
-    setErrorP(null);
-    setErrorV(null);
-
+  const cargarProductos = async () => {
     try {
+      setErrorP(null);
       const prod = await obtenerProductos();
       setProductos(prod);
     } catch (err: any) {
       console.error(err);
       setErrorP(err.message);
     }
+  };
 
+  const cargarVentas = async () => {
     try {
+      setErrorV(null);
       const vent = await obtenerVentas();
       setVentas(vent);
     } catch (err: any) {
@@ -43,12 +41,18 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    cargarProductos();
+    cargarVentas();
+  }, []);
+
   const handleCrearProducto = async (producto: any) => {
     try {
       setErrorP(null);
 
-      const creado = await crearProducto(producto);
-      setProductos([...productos, creado]);
+      await crearProducto(producto);
+
+      await cargarProductos();
     } catch (err: any) {
       console.error(err);
       setErrorP(err.message);
@@ -64,20 +68,33 @@ function App() {
     try {
       setErrorV(null);
 
-      const venta = await crearVenta({ detalles: carrito });
+      await crearVenta({ detalles: carrito });
 
       setCarrito([]);
-      setVentas([...ventas, venta]);
+
+      await cargarVentas();
+      await cargarProductos();
     } catch (err: any) {
       console.error(err);
       setErrorV(err.message);
     }
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      cargarProductos();
+    }, 3000); // cada 3 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="App">
       <h1>Inventory App</h1>
+
+      {/* errores productos */}
       {errorP && <div style={{ color: "red" }}>{errorP}</div>}
+
       <ProductoForm onCrear={handleCrearProducto} />
       <ProductoList productos={productos} />
 
@@ -87,7 +104,10 @@ function App() {
         setCarrito={setCarrito}
         onVender={handleVenta}
       />
+
+      {/* errores ventas */}
       {errorV && <div style={{ color: "orange" }}>{errorV}</div>}
+
       <VentasList ventas={ventas} productos={productos} />
     </div>
   );
