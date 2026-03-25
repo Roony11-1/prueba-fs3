@@ -1,146 +1,86 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
-
-import type { Producto, Venta, VentaDetalle } from "./types";
-import { obtenerProductos, crearProducto } from "./services/productoService";
-import { obtenerVentas, crearVenta } from "./services/ventaService";
 
 import ProductoForm from "./components/ProductoForm";
 import ProductoList from "./components/ProductoList";
 import Carrito from "./components/Carrito";
 import VentasList from "./components/VentasList";
-import Keycloak from "keycloak-js";
+import { useKeycloak } from "./auth/useKeyCloak";
+import type { Producto, VentaDetalle } from "./types";
+import { useProductos } from "./hooks/useProductos";
+import { useVentas } from "./hooks/useVentas";
+import { useCrearProducto } from "./hooks/useCrearProducto";
+import { useGenerarVenta } from "./hooks/useGenerarVenta";
 
-const keycloakOptions={
-  url:"http://localhost:8080",
-  realm: "reino-neytan",
-  clientId: "ricardito"
-}
-
-function App() 
-{
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [ventas, setVentas] = useState<Venta[]>([]);
+function App() {
   const [carrito, setCarrito] = useState<VentaDetalle[]>([]);
 
-  const [errorP, setErrorP] = useState<string | null>(null);
-  const [errorV, setErrorV] = useState<string | null>(null);
+  const { keycloak, authenticated } = useKeycloak();
+  const { data: productos = [], error: errorP } = useProductos();
+  const { data: ventas = [], error: errorV } = useVentas();
+  const crearProductoMutation = useCrearProducto();
+  const generarVentaMutation = useGenerarVenta();
 
-  const cargarProductos = async () => {
-    try {
-      setErrorP(null);
-      const prod = await obtenerProductos();
-      setProductos(prod);
-    } catch (err: any) {
-      console.error(err);
-      setErrorP(err.message);
-    }
-  };
-
-  const cargarVentas = async () => {
-    try {
-      setErrorV(null);
-      const vent = await obtenerVentas();
-      setVentas(vent);
-    } catch (err: any) {
-      console.error(err);
-      setErrorV(err.message);
-    }
-  };
-
-  const handleCrearProducto = async (producto: any) => {
-    try {
-      setErrorP(null);
-
-      await crearProducto(producto);
-
-      await cargarProductos();
-    } catch (err: any) {
-      console.error(err);
-      setErrorP(err.message);
-    }
-  };
-
-  const handleVenta = async () => {
+  const handleVenta = () => {
     if (carrito.length === 0) {
       alert("Carrito vacío");
       return;
     }
 
-    try {
-      setErrorV(null);
+    generarVentaMutation.mutate({ detalles: carrito });
 
-      await crearVenta({ detalles: carrito });
-
-      setCarrito([]);
-
-      await cargarVentas();
-      await cargarProductos();
-    } catch (err: any) {
-      console.error(err);
-      setErrorV(err.message);
-    }
+    setCarrito([]);
   };
 
-  const [keycloak, setKeyCloack] = useState<Keycloak | null>(null);
+  const handleCrearProducto = (producto: Producto) => {
+    crearProductoMutation.mutate(producto);
+  };
 
-  useEffect( () => 
-  {
-    const initKetCloack = async () => 
-    {
-      const keyCloackInstance = new Keycloak(keycloakOptions)
-      try {
-        await keyCloackInstance.init({ onLoad: "login-required" })
-        setKeyCloack(keyCloackInstance)
-      } catch (error) {
-        console.log("error: "+error)
-      }
-    }
-    initKetCloack()
-  }, []);
+  const handleLogOut = () => {
+    if (keycloak) keycloak?.logout();
+  };
 
-  const handleLogOut = () => 
-  {
-    if (keycloak)
-      keycloak?.logout()
-  }
+  if (!keycloak) return <div>Cargando...</div>;
 
-  useEffect(() => {
-  if (keycloak?.authenticated) {
-    cargarProductos();
-    cargarVentas();
-  }
-}, [keycloak]);
+  const productoError =
+    errorP?.message ||
+    (crearProductoMutation.isError
+      ? String(crearProductoMutation.error)
+      : null);
 
-if (!keycloak) return <div>Cargando...</div>;
+  const ventaError =
+    errorV?.message ||
+    (generarVentaMutation.isError ? String(generarVentaMutation.error) : null);
 
-return (
-  <div className="App">
-    <h1>Inventory App</h1>
+  return (
+    <div className="App">
+      <h1>Inventory App</h1>
 
-    {keycloak.authenticated && (
-      <>
-        {errorP && <div style={{ color: "red" }}>{errorP}</div>}
+      {authenticated && (
+        <>
+          {productoError && <p style={{ color: "red" }}>{productoError}</p>}
+          {crearProductoMutation.isPending && <p>Creando producto...</p>}
 
-        <ProductoForm onCrear={handleCrearProducto} />
-        <ProductoList productos={productos} />
+          <ProductoForm onCrear={handleCrearProducto} />
+          <ProductoList productos={productos} />
 
-        <Carrito
-          productos={productos}
-          carrito={carrito}
-          setCarrito={setCarrito}
-          onVender={handleVenta}
-        />
+          <Carrito
+            productos={productos}
+            carrito={carrito}
+            setCarrito={setCarrito}
+            onVender={handleVenta}
+          />
 
-        {errorV && <div style={{ color: "orange" }}>{errorV}</div>}
+          {ventaError && <p style={{ color: "orange" }}>{ventaError}</p>}
+          {generarVentaMutation.isPending && <p>Procesando venta...</p>}
 
-        <VentasList ventas={ventas} productos={productos} />
+          <VentasList ventas={ventas} productos={productos} />
 
-        <button onClick={handleLogOut}>Cerrar sesión</button>
-      </>
-    )}
-  </div>
-);
+          <button onClick={handleLogOut}>Cerrar sesión</button>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default App;
