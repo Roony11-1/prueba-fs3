@@ -9,6 +9,13 @@ import ProductoForm from "./components/ProductoForm";
 import ProductoList from "./components/ProductoList";
 import Carrito from "./components/Carrito";
 import VentasList from "./components/VentasList";
+import Keycloak from "keycloak-js";
+
+const keycloakOptions={
+  url:"http://localhost:8080",
+  realm: "reino-neytan",
+  clientId: "ricardito"
+}
 
 function App() 
 {
@@ -40,11 +47,6 @@ function App()
       setErrorV(err.message);
     }
   };
-
-  useEffect(() => {
-    cargarProductos();
-    cargarVentas();
-  }, []);
 
   const handleCrearProducto = async (producto: any) => {
     try {
@@ -80,29 +82,65 @@ function App()
     }
   };
 
-  return (
-    <div className="App">
-      <h1>Inventory App</h1>
+  const [keycloak, setKeyCloack] = useState<Keycloak | null>(null);
 
-      {/* errores productos */}
-      {errorP && <div style={{ color: "red" }}>{errorP}</div>}
+  useEffect( () => 
+  {
+    const initKetCloack = async () => 
+    {
+      const keyCloackInstance = new Keycloak(keycloakOptions)
+      try {
+        await keyCloackInstance.init({ onLoad: "login-required" })
+        setKeyCloack(keyCloackInstance)
+      } catch (error) {
+        console.log("error: "+error)
+      }
+    }
+    initKetCloack()
+  }, []);
 
-      <ProductoForm onCrear={handleCrearProducto} />
-      <ProductoList productos={productos} />
+  const handleLogOut = () => 
+  {
+    if (keycloak)
+      keycloak?.logout()
+  }
 
-      <Carrito
-        productos={productos}
-        carrito={carrito}
-        setCarrito={setCarrito}
-        onVender={handleVenta}
-      />
+  useEffect(() => {
+  if (keycloak?.authenticated) {
+    cargarProductos();
+    cargarVentas();
+  }
+}, [keycloak]);
 
-      {/* errores ventas */}
-      {errorV && <div style={{ color: "orange" }}>{errorV}</div>}
+if (!keycloak) return <div>Cargando...</div>;
 
-      <VentasList ventas={ventas} productos={productos} />
-    </div>
-  );
+return (
+  <div className="App">
+    <h1>Inventory App</h1>
+
+    {keycloak.authenticated && (
+      <>
+        {errorP && <div style={{ color: "red" }}>{errorP}</div>}
+
+        <ProductoForm onCrear={handleCrearProducto} />
+        <ProductoList productos={productos} />
+
+        <Carrito
+          productos={productos}
+          carrito={carrito}
+          setCarrito={setCarrito}
+          onVender={handleVenta}
+        />
+
+        {errorV && <div style={{ color: "orange" }}>{errorV}</div>}
+
+        <VentasList ventas={ventas} productos={productos} />
+
+        <button onClick={handleLogOut}>Cerrar sesión</button>
+      </>
+    )}
+  </div>
+);
 }
 
 export default App;

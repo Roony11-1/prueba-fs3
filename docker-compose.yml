@@ -1,4 +1,13 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.2
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command: ["start-dev"]
+
   bd_inventory:
     image: postgres:15
     container_name: bd_inventory
@@ -22,6 +31,7 @@ services:
       - "9997:5432"
     volumes:
       - postgres_venta:/var/lib/postgresql/data
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
