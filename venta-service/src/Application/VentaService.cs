@@ -59,9 +59,9 @@ public class VentaService(
         await outBoxChannel.Writer.WriteAsync(true);
     }
 
-    public async Task<List<Venta>> GetAll()
+    public async Task<List<Venta>> GetAllByUsuarioId(string usuarioId)
     {
-        return await ventaRepository.GetAllAsync();
+        return await ventaRepository.GetAllByUserId(usuarioId);
     }
 
     public async Task<Venta?> GetById(int id)

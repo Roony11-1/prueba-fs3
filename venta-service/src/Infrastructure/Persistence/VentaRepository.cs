@@ -27,10 +27,11 @@ public class VentaRepository : IVentaRepository
         return venta;
     }
 
-    public async Task<List<Venta>> GetAllAsync()
+    public async Task<List<Venta>> GetAllByUserId(string userId)
     {
         return await _context.Ventas
             .Include(v => v.Detalles)
+            .Where(v => v.UsuarioId == userId)
             .ToListAsync();
     }
 

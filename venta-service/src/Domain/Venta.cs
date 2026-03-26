@@ -5,6 +5,8 @@ namespace VentaService.Domain;
 public class Venta
 {
     public int Id { get; set; }
+    
+    public string UsuarioId { get; set; } = string.Empty;
 
     public List<VentaDetalle> Detalles { get; set; } = [];
 

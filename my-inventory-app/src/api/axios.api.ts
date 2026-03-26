@@ -14,6 +14,7 @@ export const setKeycloakInstance = (kc: any) => {
 
 api.interceptors.request.use(
   async (config) => {
+
     if (keycloakInstance?.token) {
       config.headers.Authorization = `Bearer ${keycloakInstance.token}`;
     }

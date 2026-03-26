@@ -1,5 +1,8 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Channels;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Logging;
 using VentaService.Application;
 using VentaService.Application.Interfaces;
 using VentaService.Domain;
@@ -67,6 +70,27 @@ builder.Services.AddHttpClient("InventarioClient", client =>
     options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(15); // Abre el circuito por 15s.
 });
 
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.Authority = "http://localhost:8080/realms/reino-neytan"; // Keycloak
+        options.MetadataAddress = "http://keycloak:8080/realms/reino-neytan/.well-known/openid-configuration"; // Donde esta en docker
+        options.Audience = "ricardito"; // clientId
+        options.RequireHttpsMetadata = false; // nose
+
+        options.TokenValidationParameters = new()
+        {
+            ValidateAudience = false, // opcional dependiendo config
+            ValidateIssuer = true,
+            ValidIssuer = "http://localhost:8080/realms/reino-neytan",
+            NameClaimType = "sub"
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -85,6 +109,10 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.UseCors("AllowAll");
+
+// Seguridad
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 

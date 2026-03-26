@@ -4,5 +4,5 @@ public interface IVentaRepository
 {
     Task<Venta> AddAsync(Venta venta);
     Task<Venta?> GetByIdAsync(int id);
-    Task<List<Venta>> GetAllAsync();
+    Task<List<Venta>> GetAllByUserId(string userId);
 }

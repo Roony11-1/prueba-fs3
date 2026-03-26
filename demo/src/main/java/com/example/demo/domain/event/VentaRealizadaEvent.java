@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class VentaRealizadaEvent 
 {
     private Integer id;
+    private String usuarioId;
     private List<DetalleVenta> detalles;
     private Instant fecha;
 }

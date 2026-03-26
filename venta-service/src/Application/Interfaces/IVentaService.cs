@@ -6,5 +6,5 @@ public interface IVentaService
 {
     Task<Venta> CrearVenta(Venta venta);
     Task<Venta?> GetById(int id);
-    Task<List<Venta>> GetAll();
+    Task<List<Venta>> GetAllByUsuarioId(string usuarioId);
 }

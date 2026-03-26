@@ -36,6 +36,7 @@ services:
   keycloak:
     image: keycloak/keycloak:24.0.2
     command: start-dev
+    container_name: keycloak
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://bd_keycloak:5432/keycloak_db

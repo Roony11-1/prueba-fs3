@@ -5,6 +5,7 @@ Microsoft.EntityFrameworkCore.Design<br>
 Npgsql.EntityFrameworkCore.PostgreSQL<br>
 Confluent.Kafka<br>
 Microsoft.Extensions.Http.Resilience<br>
+Microsoft.AspNetCore.Authentication.JwtBearer<br>
 
 # Instalar dependencias:<br> dotnet add package<br><br>
 
