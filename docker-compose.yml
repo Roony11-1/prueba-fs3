@@ -44,6 +44,8 @@ services:
       KC_DB_PASSWORD: keycloak_pass
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      environment:
+      KC_HOSTNAME_STRICT: false
     ports:
       - "8080:8080"
     depends_on:
