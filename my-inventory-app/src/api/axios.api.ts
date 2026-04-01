@@ -1,3 +1,4 @@
+import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 
 export const api = axios.create({
@@ -6,18 +7,15 @@ export const api = axios.create({
   },
 });
 
-let keycloakInstance: any = null;
+const { getAccessTokenSilently } = useAuth0();
 
-export const setKeycloakInstance = (kc: any) => {
-  keycloakInstance = kc;
-};
 
 api.interceptors.request.use(
-  async (config) => {
-
-    if (keycloakInstance?.token) {
-      config.headers.Authorization = `Bearer ${keycloakInstance.token}`;
-    }
+  async (config) => 
+  {
+      const token = await getAccessTokenSilently();
+      
+      config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
