@@ -89,19 +89,6 @@ builder.Services
 
             NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
         };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = context =>
-            {
-                // Esto imprimirá TODOS los claims que .NET logró leer
-                foreach (var claim in context.Principal.Claims)
-                {
-                    Console.WriteLine($"Claim: {claim.Type} - Value: {claim.Value}");
-                }
-                return Task.CompletedTask;
-            }
-        };
     });
 
 builder.Services.AddAuthorization();
