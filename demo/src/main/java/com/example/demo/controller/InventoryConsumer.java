@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import com.example.demo.domain.Producto;
 import com.example.demo.domain.event.VentaRealizadaEvent;
 import com.example.demo.repository.ProductoRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
-import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
