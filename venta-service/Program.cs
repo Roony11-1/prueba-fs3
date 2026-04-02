@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Channels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Tokens;
 using VentaService.Application;
 using VentaService.Application.Interfaces;
 using VentaService.Domain;
@@ -11,6 +11,8 @@ using VentaService.Infrastructure.Clients;
 using VentaService.Infrastructure.Messaging;
 using VentaService.Infrastructure.Middleware;
 using VentaService.Infrastructure.Persistence;
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,18 +76,31 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false;
-        options.Authority = "http://localhost:8080/realms/reino-neytan"; // Keycloak
-        options.MetadataAddress = "http://keycloak:8080/realms/reino-neytan/.well-known/openid-configuration"; // Donde esta en docker
-        options.Audience = "ricardito"; // clientId
-        options.RequireHttpsMetadata = false; // nose
+        options.Authority = "https://dev-pl1b5b2qt0uh7j45.us.auth0.com/"; 
+        options.Audience = "https://my-api";
 
-        options.TokenValidationParameters = new()
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = false, // opcional dependiendo config
             ValidateIssuer = true,
-            ValidIssuer = "http://localhost:8080/realms/reino-neytan",
-            NameClaimType = "sub"
+            ValidIssuer = "https://dev-pl1b5b2qt0uh7j45.us.auth0.com/",
+            ValidateAudience = true,
+            ValidAudience = "https://my-api",
+            ValidateLifetime = true,
+
+            NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                // Esto imprimirá TODOS los claims que .NET logró leer
+                foreach (var claim in context.Principal.Claims)
+                {
+                    Console.WriteLine($"Claim: {claim.Type} - Value: {claim.Value}");
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -106,14 +121,14 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
-app.MapControllers();
 
 app.UseCors("AllowAll");
 
-// Seguridad
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+app.MapControllers();
 
 app.Run();

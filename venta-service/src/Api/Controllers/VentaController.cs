@@ -15,10 +15,10 @@ public class VentaController(IVentaService ventaService) : ControllerBase
     [Authorize]
     public async Task<IActionResult> CrearVenta(Venta venta)
     {
-        var userId = User.FindFirst("sub")?.Value;
+        var userId = User.Identity?.Name;
 
-        if (userId == null)
-            return Unauthorized();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
         venta.UsuarioId = userId;
 
@@ -41,10 +41,10 @@ public class VentaController(IVentaService ventaService) : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetAll()
     {
-        var userId = User.FindFirst("sub")?.Value;
+        var userId = User.Identity?.Name;
 
-        if (userId == null)
-            return Unauthorized();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
         var ventas = await _ventaService.GetAllByUsuarioId(userId);
         return Ok(ventas);

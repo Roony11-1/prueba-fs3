@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")!).render(
     <Auth0Provider
       domain="dev-pl1b5b2qt0uh7j45.us.auth0.com"
       clientId="UO7NHVMUn5X7KAltVX071t52C6FgHPb0"
-      authorizationParams={{ redirect_uri: window.location.origin, audience: "ricardito" }} >
+      authorizationParams={{ redirect_uri: window.location.origin, audience: "https://my-api" }} >
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>

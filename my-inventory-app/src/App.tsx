@@ -23,8 +23,28 @@ function App() {
     user,
   } = useAuth0();
 
+  const API_AUDIENCE = "https://my-api";
+
   const signup = () =>
-    login({ authorizationParams: { screen_hint: "sign up" } });
+    login({
+      authorizationParams: {
+        screen_hint: "sign up",
+        audience: API_AUDIENCE,
+      },
+    });
+
+  const handleLogin = async () => {
+    console.log("Intentando login con audiencia:", API_AUDIENCE);
+    try {
+      await login({
+        authorizationParams: {
+          audience: API_AUDIENCE,
+        },
+      });
+    } catch (error) {
+      console.error("Error al redirigir:", error);
+    }
+  };
 
   const logout = () =>
     auth0logout({ logoutParams: { returnTo: window.location.origin } });
@@ -59,7 +79,7 @@ function App() {
     errorV?.message ||
     (generarVentaMutation.isError ? String(generarVentaMutation.error) : null);
 
-  if (isLoading) return <div>Cargando..</div>;
+  if (isLoading) return <div>Cargando autenticación...</div>;
 
   return (
     <div className="App">
@@ -72,7 +92,7 @@ function App() {
       ) : (
         <div>
           <button onClick={() => signup()}>Registrarse</button>
-          <button onClick={() => login()}>Logearse</button>
+          <button onClick={() => handleLogin()}>Logearse</button>
         </div>
       )}
 
@@ -93,14 +113,6 @@ function App() {
       {generarVentaMutation.isPending && <p>Procesando venta...</p>}
 
       <VentasList ventas={ventas} productos={productos} />
-
-      <button
-        onClick={() => {
-          alert("Holaaa");
-        }}
-      >
-        Cerrar sesión
-      </button>
     </div>
   );
 }

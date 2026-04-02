@@ -1,4 +1,3 @@
-import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 
 export const api = axios.create({
@@ -7,13 +6,11 @@ export const api = axios.create({
   },
 });
 
-const { getAccessTokenSilently } = useAuth0();
-
+const token: (string | undefined) = undefined;
 
 api.interceptors.request.use(
   async (config) => 
   {
-      const token = await getAccessTokenSilently();
       
       config.headers.Authorization = `Bearer ${token}`;
     return config;

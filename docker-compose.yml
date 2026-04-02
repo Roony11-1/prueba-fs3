@@ -1,14 +1,4 @@
 services:
-  bd_keycloak:
-    image: postgres:15
-    container_name: bd_keycloak
-    environment:
-      POSTGRES_DB: keycloak_db
-      POSTGRES_USER: keycloak_user
-      POSTGRES_PASSWORD: keycloak_pass
-    volumes:
-      - postgres_keycloak:/var/lib/postgresql/data
-
   bd_inventory:
     image: postgres:15
     container_name: bd_inventory
@@ -32,24 +22,6 @@ services:
       - "9997:5432"
     volumes:
       - postgres_venta:/var/lib/postgresql/data
-
-  keycloak:
-    image: keycloak/keycloak:24.0.2
-    command: start-dev
-    container_name: keycloak
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://bd_keycloak:5432/keycloak_db
-      KC_DB_USERNAME: keycloak_user
-      KC_DB_PASSWORD: keycloak_pass
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      environment:
-      KC_HOSTNAME_STRICT: false
-    ports:
-      - "8080:8080"
-    depends_on:
-      - bd_keycloak
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -110,4 +82,3 @@ services:
 volumes:
   postgres_inventory:
   postgres_venta:
-  postgres_keycloak:
